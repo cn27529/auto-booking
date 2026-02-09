@@ -1,6 +1,13 @@
 # 員林基督教醫院自動掛號系統
 
 為 80 歲媽媽自動掛劉又綾醫師的號
+員林基督教醫院 Yuanlin Christian Hospital
+員基
+https://bc.cch.org.tw/
+二基
+https://erhlin.cch.org.tw/
+彰基
+https://www.cch.org.tw/
 
 ## 快速使用
 
