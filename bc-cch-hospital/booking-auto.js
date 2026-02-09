@@ -55,6 +55,7 @@ class BCCHBooking {
     try {
       const page = await browser.newPage();
       await page.goto(this.config.baseUrl, { waitUntil: "networkidle2" });
+      await page.setViewport({ width: 600, height: 800 });
 
       // 等待日期選擇器載入
       await page.waitForSelector("select");
@@ -437,11 +438,19 @@ class BCCHBooking {
     );
 
     // 每天執行
-    console.log("⏰ 每天 1,3,5,7,9,11,13,15,17,19,21,23 自動檢查掛號");
-    cron.schedule("0 1,3,5,7,9,11,13,15,17,19,21,23 * * *", () => {
-      console.log(`\n[${new Date().toLocaleString()}] 開始自動掛號檢查...`);
-      this.tryBooking();
-    });
+    console.log("⏰ 每天分鐘自動檢查掛號");
+    cron.schedule(
+      "* * * * *",
+      async () => {
+        console.log(`\n[${new Date().toLocaleString()}] 開始自動掛號檢查...`);
+        try {
+          await this.tryBooking();
+        } catch (error) {
+          console.error("❌ 自動掛號檢查失敗:", error);
+        }
+      },
+      { timezone: "Asia/Taipei" },
+    );
 
     // // 立即執行一次
     // this.tryBooking().then((result) => {
