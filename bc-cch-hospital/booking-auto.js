@@ -438,11 +438,11 @@ class BCCHBooking {
     );
 
     // 每天執行
-    console.log("⏰ 每天分鐘自動檢查掛號");
     cron.schedule(
-      "* * * * *",
+      "*/10 * * * *",
       async () => {
-        console.log(`\n[${new Date().toLocaleString()}] 開始自動掛號檢查...`);
+        console.log("每10分鐘執行一次，自動檢查掛號");
+        console.log(`\n執行時間：[${new Date().toLocaleString()}] 開始自動掛號檢查...`);        
         try {
           await this.tryBooking();
         } catch (error) {
