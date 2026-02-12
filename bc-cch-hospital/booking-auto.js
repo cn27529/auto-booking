@@ -19,6 +19,9 @@ class BCCHBooking {
       mailFrom: "cn27529@gmail.com",
     };
 
+    this.task = null;
+    this.isRunning = false;
+
     // 設置郵件傳送器 (只有在有密碼時才初始化)
     if (process.env.GMAIL_APP_PASSWORD) {
       this.transporter = nodemailer.createTransport({
@@ -371,6 +374,12 @@ class BCCHBooking {
         }
       }
 
+      // 停止定時任務
+      if (this.task) {
+        this.task.stop();
+        console.log("🛑 自動掛號任務已停止");
+      }
+
       process.exit(0); // 掛號成功或重複掛號後退出程序
     }
 
@@ -437,30 +446,66 @@ class BCCHBooking {
       `📋 運行模式: ${this.mode === "1" ? "互動選擇醫師" : "自動尋找指定醫師"}, 你選的是:${this.mode}`,
     );
 
-    // 每天執行
-    cron.schedule(
+    if (this.isRunning) {
+      console.log("⚠️ 自動掛號系統已在運行中");
+      return;
+    }
+
+    // 清理舊任務（安全起見）
+    if (this.task) {
+      this.task.stop();
+      this.task = null;
+    }
+
+    console.log("🚀 啟動自動掛號系統...");
+
+    // 2. 建立新任務
+
+    // 建立新任務（一定要做！）
+    this.task = cron.schedule(
       "*/10 * * * *",
       async () => {
-        console.log("每10分鐘執行一次，自動檢查掛號");
-        console.log(`\n執行時間：[${new Date().toLocaleString()}] 開始自動掛號檢查...`);        
+        console.log(`\n[${new Date().toLocaleString()}] 開始自動掛號檢查...`);
         try {
-          await this.tryBooking();
+          const success = await this.tryBooking();
+          if (success) {
+            console.log("🎉 掛號成功，停止自動掛號任務");
+            this.stopScheduler(); // 使用統一的方法停止
+          }
         } catch (error) {
           console.error("❌ 自動掛號檢查失敗:", error);
         }
       },
-      { timezone: "Asia/Taipei" },
+      { scheduled: true, timezone: "Asia/Taipei" },
     );
 
-    // // 立即執行一次
-    // this.tryBooking().then((result) => {
-    //   if (!result) {
-    //     // 如果沒找到可掛號時段，結束程序
-    //     console.log("👋 自動掛號系統已停止");
-    //     process.exit(0);
-    //   }
-    // });
+    this.isRunning = true;
+    console.log("✅ 定時任務已建立並啟動");
+
+    // 立即執行第一次
+    setTimeout(() => {
+      if (this.task) {
+        console.log("📞 立即執行第一次掛號檢查...");
+        this.task.now();
+      }
+    }, 1000);
   }
+
+  stopScheduler() {
+    if (this.task) {
+      this.task.stop();
+      this.task = null;
+      this.isRunning = false;
+      console.log("🛑 自動掛號系統已停止");
+    }
+  }
+
+  restartScheduler() {
+    console.log("🔄 重新啟動自動掛號系統...");
+    this.stopScheduler();
+    this.startScheduler();
+  }
+
 }
 
 // 從命令行參數獲取模式
@@ -478,10 +523,17 @@ if (mode !== "1" && mode !== "2") {
 
 // 啟動自動掛號系統
 const booking = new BCCHBooking(mode);
-booking.startScheduler();
+booking.startScheduler(); // ✅ 這裡已經啟動任務了
 
-// 保持程序運行
+// // 5分鐘後重新啟動（示範用）
+// setTimeout(() => {
+//   booking.restartScheduler();  // 會先停止舊任務，再建立新任務
+// }, 5 * 60 * 1000);
+
+
+// 優雅關閉
 process.on("SIGINT", () => {
-  console.log("\n👋 自動掛號系統已停止");
+  booking.stopScheduler();
+  console.log("\n👋 優雅關閉，自動掛號系統已停止");
   process.exit(0);
 });
