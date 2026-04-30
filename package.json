@@ -4,7 +4,10 @@
   "description": "員林基督教醫院自動掛號系統",
   "main": "booking.js",
   "scripts": {
-    "start": "node bc-cch-hospital/booking-auto.js"
+    "start": "node bc-cch-hospital/booking-auto.js",
+    "quick": "node bc-cch-hospital/quick-booking.js",
+    "find": "node bc-cch-hospital/find-doctor.js",
+    "booking": "node bc-cch-hospital/booking.js"    
   },
   "dependencies": {
     "puppeteer": "21.11.0",
